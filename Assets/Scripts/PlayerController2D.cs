@@ -14,6 +14,11 @@ public class PlayerController2D : MonoBehaviour
     public GameObject rangedAttackPrefab; // Prefab de ataque a distancia
     public Transform attackSpawnPoint; // Punto donde aparece el ataque
 
+    public List<GameObject> heartSprites; // Lista de sprites de corazones
+    private int maxHearts = 3; // Número máximo de corazones
+    private int currentHearts; // Corazones actuales
+    private int attackCount = 0; // Contador de ataques
+
     private Animator animator; // Referencia al Animator
     private Rigidbody2D rb; // Referencia al Rigidbody2D
 
@@ -30,6 +35,9 @@ public class PlayerController2D : MonoBehaviour
         // Obtener el Animator y el Rigidbody2D
         animator = GetComponent<Animator>();
         rb = GetComponent<Rigidbody2D>();
+
+        // Inicializar los corazones
+        currentHearts = maxHearts;
     }
 
     private void Update()
@@ -98,7 +106,6 @@ public class PlayerController2D : MonoBehaviour
                 transform.rotation = Quaternion.Euler(0, 180, 0); // Mirar a la izquierda
             }
         }
-        
 
         // Salto
         if (jump && canJump)
@@ -154,6 +161,7 @@ public class PlayerController2D : MonoBehaviour
 
         isAttacking = true;
         animator.SetTrigger("MeleeAttack");
+        Debug.Log("Performed Melee Attack");
 
         yield return new WaitForSeconds(0.1f);
 
@@ -162,9 +170,15 @@ public class PlayerController2D : MonoBehaviour
             Instantiate(meleeAttackPrefab, attackSpawnPoint.position, Quaternion.identity);
         }
 
+        // Incrementar el contador de ataques
+        HandleAttack();
+
         yield return new WaitForSeconds(0.2f);
         isAttacking = false;
     }
+
+
+
 
     private IEnumerator PerformRangedAttack()
     {
@@ -172,6 +186,7 @@ public class PlayerController2D : MonoBehaviour
 
         isAttacking = true;
         animator.SetTrigger("RangedAttack");
+        Debug.Log("Performed Ranged Attack");
 
         yield return new WaitForSeconds(0.1f);
 
@@ -180,9 +195,53 @@ public class PlayerController2D : MonoBehaviour
             Instantiate(rangedAttackPrefab, attackSpawnPoint.position, Quaternion.identity);
         }
 
+        // Incrementar el contador de ataques
+        HandleAttack();
+
         yield return new WaitForSeconds(0.2f);
         isAttacking = false;
     }
+
+
+
+    private void HandleAttack()
+    {
+        attackCount++;
+        Debug.Log($"Attack count: {attackCount}");
+
+        if (attackCount >= 4)
+        {
+            Debug.Log("Attack count reached 4. Removing a heart...");
+            attackCount = 0;
+            RemoveHeart();
+        }
+    }
+
+
+    private void RemoveHeart()
+    {
+        if (currentHearts > 0)
+        {
+            currentHearts--;
+            Debug.Log($"Heart removed. Remaining hearts: {currentHearts}");
+
+            if (heartSprites[currentHearts] != null)
+            {
+                heartSprites[currentHearts].SetActive(false);
+                Debug.Log($"Heart {currentHearts} deactivated.");
+            }
+            else
+            {
+                Debug.LogWarning($"Heart sprite at index {currentHearts} is null!");
+            }
+        }
+        else
+        {
+            Debug.LogWarning("No hearts left to remove!");
+        }
+    }
+
+
 
     private void StartDefend()
     {
